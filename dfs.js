@@ -19,7 +19,7 @@ var dfsWalk = function(x, y, squareColor) {
 	if (y < 0 || y >= app.input.fields.length || x < 0 || x >= app.input.fields[y].length)
 		return;
 
-	if (['X', 'V'].indexOf(app.input.fields[y][x]) > -1)
+	if (app.input.fields[y][x] !== ",")
 		return;
 
 	app.input.fields[y][x] = 'V';	

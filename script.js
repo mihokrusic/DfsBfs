@@ -13,7 +13,8 @@ var app = {
 	bfsQueue: undefined,
 	options: {
 		grass: "rgba(0, 0, 250, 0.2)",
-		fence: "rgba(0, 0, 0, 1)"
+		fence: "rgba(0, 0, 0, 1)",
+		default: "rgba(180, 20, 20, 1)"
 	}
 };
 
@@ -96,33 +97,18 @@ XXXX,,,,,,,,,,,,,,,,,,,,XXXX,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,XX,,,,,,,,,,,,,,,,,,,,
 
 
 var onLoad = function() {
+	// get objects
 	app.objects.canvas = document.getElementById('canvasElem');
 	app.objects.ctx = app.objects.canvas.getContext('2d');
 
+	// set on click handlers
 	document.getElementById("btnDfs").addEventListener('click', drawDfs, false);
 	document.getElementById("btnBfs").addEventListener('click', drawBfs, false);
 	document.getElementById("btnClear").addEventListener('click', clearMap, false);
+	document.getElementById("btnGenerate").addEventListener('click', generateMap, false);
 
 	// parse input
 	app.input.parsed = (app.input.original.trim().replace( /\n/g, "|" ).split("|"));
-
-	// create queue
-	app.drawingQueue = async.queue(function (task, callback) {
-    	drawSquare(task.x, task.y, task.fillStyle);
-
-    	setTimeout(callback, 0);
-	}, 1);
-
-	initializeFieldsAndMap();
-};
-
-
-
-var initializeFieldsAndMap = function() {
-
-	var x, y;
-
-	app.objects.ctx.clearRect(0, 0, app.objects.canvas.width, app.objects.canvas.height);
 	app.input.fields = [];
 
 	// Initialize structure
@@ -133,19 +119,80 @@ var initializeFieldsAndMap = function() {
 		}
 	}
 
+	// create drawing queue
+	app.drawingQueue = async.queue(function (task, callback) {
+    	drawSquare(task.x, task.y, task.fillStyle);
 
-	// draw initial squares
+    	setTimeout(callback, 0);
+	}, 1);
+
+	clearMap();
+};
+
+
+var generateMap = function() {
+	killQueues();
+	resetFields();
+
+    for (y = 0; y < app.input.fields.length; y++) {
+		for (x = 0; x < app.input.fields[y].length; x++) {
+			if (100 * Math.random() > 30)
+				app.input.fields[y][x] = ',';
+			else
+				app.input.fields[y][x] = 'X';
+		}
+	}	
+
+	drawInitialMap();
+};
+
+
+var clearMap = function() {
+	killQueues();
+	resetFields();
+	drawInitialMap();
+};
+
+var killQueues = function() {
+	// kill queues
+	app.drawingQueue.kill();
+	if (app.bfsQueue)
+		app.bfsQueue.kill();
+};
+
+
+var resetFields = function() {
+	// reset fields
+    for (y = 0; y < app.input.fields.length; y++) {
+		for (x = 0; x < app.input.fields[y].length; x++) {
+			if (app.input.fields[y][x] === 'V')
+				app.input.fields[y][x] = ',';
+		}
+	}
+};
+
+
+
+var drawInitialMap = function() {
+
+	var x, y;
+
+	app.objects.ctx.clearRect(0, 0, app.objects.canvas.width, app.objects.canvas.height);
+
+	// draw initial map
     for (y = 0; y < app.input.fields.length; y++) {
 
 		for (x = 0; x < app.input.fields[y].length; x++) {
 
 			switch (app.input.fields[y][x]) {
 				case ",": 
-				case "V": 
 					drawSquare(x, y, app.options.grass);
 					break;
 				case "X": 
 					drawSquare(x, y, app.options.fence);
+					break;
+				default:
+					drawSquare(x, y, app.options.default);
 					break;
 			}
 		}
@@ -165,10 +212,4 @@ var getRandomColor = function(alpha) {
 var drawSquare = function(x, y, fillStyle) {
 	app.objects.ctx.fillStyle = fillStyle;
 	app.objects.ctx.fillRect(x * 10, y * 10, 10, 10);	
-};
-
-
-var clearMap = function() {
-	app.drawingQueue.kill();
-	initializeFieldsAndMap();
 };

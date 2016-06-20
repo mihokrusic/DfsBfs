@@ -3,8 +3,8 @@ var bfsStartX, bfsStartY;
 
 var drawBfs = function() {
 
-	clearMap
-	
+	clearMap();
+
 	bfsStartX = bfsStartY = 0;
 
 	if (!app.bfsQueue) {
